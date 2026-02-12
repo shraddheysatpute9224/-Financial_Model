@@ -1,9 +1,10 @@
 # StockPulse Data Extraction System — Complete Technical Blueprint
 
-**Version:** 1.0  
-**Based On:** V2 Complete Data Requirements Specification (160 Fields)  
-**Platform:** StockPulse — Indian Stock Analysis Platform  
+**Version:** 2.0
+**Based On:** V2 Complete Data Requirements Specification (160 Fields)
+**Platform:** StockPulse — Indian Stock Analysis Platform
 **Purpose:** Implementation-ready system documentation for building a robust data extraction and web scraping system
+**Last Updated:** 2026-02-12
 
 ---
 
@@ -23,6 +24,12 @@
 12. [Data Storage & Organization](#12-data-storage--organization)
 13. [Scalability & Future Expansion](#13-scalability--future-expansion)
 14. [Features of the System](#14-features-of-the-system)
+
+**Appendices:**
+- [Appendix A: Complete 160-Field Reference](#appendix-a-complete-160-field-reference)
+- [Appendix B: Primary Data Sources Summary](#appendix-b-primary-data-sources-summary)
+- [Appendix C: Complete Calculation Formulas Reference](#appendix-c-complete-calculation-formulas-reference)
+- [Appendix D: Validation Rules Quick Reference](#appendix-d-validation-rules-quick-reference)
 
 ---
 
@@ -1720,5 +1727,273 @@ The V2 requirements reference a scoring system where specific fields serve as in
 
 ---
 
-*End of Document — StockPulse Data Extraction System Blueprint v1.1*
+## Appendix C: Complete Calculation Formulas Reference
+
+All 57 internally calculated fields with their exact formulas, dependencies, and computation notes.
+
+### C.1 Derived Price Metrics (11 Fields — Category 3)
+
+| # | Field | Formula | Dependencies | Notes |
+|---|-------|---------|-------------|-------|
+| 28 | daily_return_pct | `((close - prev_close) / prev_close) x 100` | close (#19), prev_close (#26) | Use adjusted_close for multi-year return series |
+| 29 | return_5d_pct | `((close_today - close_5d_ago) / close_5d_ago) x 100` | close (#19), 5 trading days lookback | Skip non-trading days |
+| 30 | return_20d_pct | `((close_today - close_20d_ago) / close_20d_ago) x 100` | close (#19), 20 trading days lookback | Approximately 1 calendar month |
+| 31 | return_60d_pct | `((close_today - close_60d_ago) / close_60d_ago) x 100` | close (#19), 60 trading days lookback | Approximately 3 calendar months |
+| 32 | day_range_pct | `((high - low) / low) x 100` | high (#17), low (#18) | Intraday volatility measure |
+| 33 | gap_percentage | `((open - prev_close) / prev_close) x 100` | open (#16), prev_close (#26) | Gap-up: positive; Gap-down: negative |
+| 34 | 52_week_high | `MAX(high) over 252 trading days` | high (#17), 252-day window | Rolling maximum |
+| 35 | 52_week_low | `MIN(low) over 252 trading days` | low (#18), 252-day window | Rolling minimum |
+| 36 | distance_from_52w_high | `((52_week_high - close) / 52_week_high) x 100` | 52_week_high (#34), close (#19) | Always >= 0; 0 means at 52-week high |
+| 37 | volume_ratio | `volume / avg_volume_20d` | volume (#21), avg_volume_20d (#38) | >2 indicates unusual volume |
+| 38 | avg_volume_20d | `SUM(volume over 20 days) / 20` | volume (#21), 20-day window | Exclude zero-volume (halt) days from average |
+
+### C.2 Income Statement Calculated Fields (7 Fields — Category 4)
+
+| # | Field | Formula | Dependencies | Notes |
+|---|-------|---------|-------------|-------|
+| 40 | revenue_growth_yoy | `((revenue_current_Q - revenue_same_Q_last_year) / revenue_same_Q_last_year) x 100` | revenue (#39), same-quarter prior year | Compare Q-to-Q (not sequential quarters) |
+| 41 | revenue_growth_qoq | `((revenue_current_Q - revenue_previous_Q) / revenue_previous_Q) x 100` | revenue (#39), prior quarter | Sequential quarter growth |
+| 45 | gross_margin | `(gross_profit / revenue) x 100` | gross_profit (#44), revenue (#39) | null if gross_profit unavailable |
+| 47 | net_profit_margin | `(net_profit / revenue) x 100` | net_profit (#46), revenue (#39) | Can be negative for loss-making firms |
+| 49 | eps_growth_yoy | `((eps_current - eps_same_Q_last_year) / ABS(eps_same_Q_last_year)) x 100` | eps (#48), same-quarter prior year | Use ABS in denominator for negative base EPS |
+| 53 | ebit | `ebitda - depreciation` | ebitda (#52), depreciation (#51) | OR: operating_profit if EBITDA unavailable |
+| 56 | effective_tax_rate | `(tax_expense / (net_profit + tax_expense)) x 100` | tax_expense (#55), net_profit (#46) | Pre-tax profit = net_profit + tax_expense |
+
+### C.3 Balance Sheet Calculated Fields (2 Fields — Category 5)
+
+| # | Field | Formula | Dependencies | Notes |
+|---|-------|---------|-------------|-------|
+| 63 | net_debt | `total_debt - cash_and_equivalents` | total_debt (#59), cash_and_equivalents (#62) | Negative = net cash position (positive signal) |
+| 72 | book_value_per_share | `total_equity / shares_outstanding` | total_equity (#58), shares_outstanding (#11) | Also available scraped from Screener.in |
+
+### C.4 Cash Flow Calculated Field (1 Field — Category 6)
+
+| # | Field | Formula | Dependencies | Notes |
+|---|-------|---------|-------------|-------|
+| 78 | free_cash_flow | `operating_cash_flow - capital_expenditure` | operating_cash_flow (#74), capital_expenditure (#77) | CapEx stored as positive; subtract from OCF |
+
+### C.5 Financial Ratios (11 Fields — Category 7)
+
+| # | Field | Formula | Dependencies | Notes |
+|---|-------|---------|-------------|-------|
+| 82 | roe | `(net_profit / total_equity) x 100` | net_profit (#46), total_equity (#58) | Use TTM net_profit for quarterly updates; null if equity <= 0 |
+| 83 | roa | `(net_profit / total_assets) x 100` | net_profit (#46), total_assets (#57) | Annual calculation |
+| 84 | roic | `(NOPAT / invested_capital) x 100` where `NOPAT = operating_profit x (1 - effective_tax_rate/100)` and `invested_capital = total_equity + total_debt - cash_and_equivalents` | operating_profit (#42), effective_tax_rate (#56), total_equity (#58), total_debt (#59), cash_and_equivalents (#62) | Measures return on all invested capital |
+| 85 | debt_to_equity | `total_debt / total_equity` | total_debt (#59), total_equity (#58) | null if equity <= 0; negative equity = high risk flag |
+| 86 | interest_coverage | `ebit / interest_expense` | ebit (#53), interest_expense (#50) | null if interest_expense = 0; <2 = D1 deal-breaker |
+| 87 | current_ratio | `current_assets / current_liabilities` | current_assets (#64), current_liabilities (#65) | null if current_liabilities = 0 |
+| 88 | quick_ratio | `(current_assets - inventory) / current_liabilities` | current_assets (#64), inventory (#66), current_liabilities (#65) | More conservative than current ratio |
+| 89 | asset_turnover | `revenue / total_assets` | revenue (#39, TTM), total_assets (#57) | Efficiency of asset utilization |
+| 90 | inventory_turnover | `cogs / average_inventory` where `cogs = revenue - gross_profit` | revenue (#39), gross_profit (#44), inventory (#66, avg of 2 periods) | N/A for service/banking companies |
+| 91 | receivables_turnover | `revenue / average_receivables` | revenue (#39, TTM), receivables (#67, avg of 2 periods) | Higher = faster collection |
+| 92 | dividend_payout_ratio | `(dividends_paid / net_profit) x 100` | dividends_paid (#79), net_profit (#46) | null if net_profit <= 0; >100% = paying from reserves |
+
+### C.6 Valuation Metrics Calculated Fields (13 Fields — Category 8)
+
+| # | Field | Formula | Dependencies | Notes |
+|---|-------|---------|-------------|-------|
+| 93 | market_cap | `close x shares_outstanding` | close (#19), shares_outstanding (#11) | Updated daily; stored in Crores |
+| 94 | enterprise_value | `market_cap + net_debt` | market_cap (#93), net_debt (#63) | EV = Market Cap + Total Debt - Cash |
+| 95 | pe_ratio | `close / eps_ttm` | close (#19), eps (#48, TTM sum of 4 quarters) | null if EPS <= 0; >500 flagged |
+| 97 | peg_ratio | `pe_ratio / eps_growth_yoy` | pe_ratio (#95), eps_growth_yoy (#49) | null if growth = 0; <1 = undervalued |
+| 98 | pb_ratio | `close / book_value_per_share` | close (#19), book_value_per_share (#72) | null if BVPS <= 0 |
+| 99 | ps_ratio | `market_cap / revenue_ttm` | market_cap (#93), revenue (#39, TTM) | null if revenue <= 0 |
+| 100 | ev_to_ebitda | `enterprise_value / ebitda_ttm` | enterprise_value (#94), ebitda (#52, TTM) | null if EBITDA <= 0 |
+| 101 | ev_to_sales | `enterprise_value / revenue_ttm` | enterprise_value (#94), revenue (#39, TTM) | null if revenue <= 0 |
+| 102 | dividend_yield | `(annual_dividend_per_share / close) x 100` | dividend_per_share (#120), close (#19) | 0 if no dividends (not null) |
+| 103 | fcf_yield | `(free_cash_flow / market_cap) x 100` | free_cash_flow (#78), market_cap (#93) | Can be negative; >5% = Q9 booster |
+| 104 | earnings_yield | `(eps_ttm / close) x 100` | eps (#48, TTM), close (#19) | Inverse of P/E; compare to bond yields |
+| 108 | historical_pe_median | `MEDIAN(pe_ratio) over 5 years (1260 trading days)` | pe_ratio (#95), 5-year history | Exclude null/negative PE periods |
+| 8 | market_cap_category | `IF market_cap >= 20000 Cr THEN 'Large Cap' ELIF >= 5000 Cr THEN 'Mid Cap' ELIF >= 500 Cr THEN 'Small Cap' ELSE 'Micro Cap'` | market_cap (#93) | Thresholds per SEBI classification |
+
+### C.7 Shareholding Calculated Fields (2 Fields — Category 9)
+
+| # | Field | Formula | Dependencies | Notes |
+|---|-------|---------|-------------|-------|
+| 115 | promoter_holding_change | `promoter_holding_current_Q - promoter_holding_previous_Q` | promoter_holding (#110), prior quarter value | Positive = increase; negative = R4 if >5% decline |
+| 116 | fii_holding_change | `fii_holding_current_Q - fii_holding_previous_Q` | fii_holding (#112), prior quarter value | Positive >2% = Q6 booster |
+
+### C.8 Technical Indicators (15 Fields — Category 12)
+
+| # | Field | Formula | Dependencies | Notes |
+|---|-------|---------|-------------|-------|
+| 138 | sma_20 | `SUM(close over 20 days) / 20` | close (#19), 20-day window | Short-term trend; Bollinger middle band |
+| 139 | sma_50 | `SUM(close over 50 days) / 50` | close (#19), 50-day window | Medium-term trend reference |
+| 140 | sma_200 | `SUM(close over 200 days) / 200` | close (#19), 200-day window | Long-term trend; golden/death cross signal |
+| 141 | ema_12 | `EMA(close, span=12)` where `multiplier = 2/(12+1)` and `EMA_today = (close - EMA_yesterday) x multiplier + EMA_yesterday` | close (#19), prior EMA values | Fast EMA for MACD |
+| 142 | ema_26 | `EMA(close, span=26)` | close (#19), prior EMA values | Slow EMA for MACD |
+| 143 | rsi_14 | `100 - (100 / (1 + RS))` where `RS = avg_gain_14 / avg_loss_14` | close (#19), 14-period gains and losses | Range 0-100; <30 oversold, >70 overbought |
+| 144 | macd | `ema_12 - ema_26` | ema_12 (#141), ema_26 (#142) | Positive = bullish momentum |
+| 145 | macd_signal | `EMA(macd, span=9)` | macd (#144), 9-period EMA | MACD crossing above signal = buy signal |
+| 146 | bollinger_upper | `sma_20 + (2 x StdDev(close, 20))` | sma_20 (#138), close (#19) standard deviation | Upper volatility band |
+| 147 | bollinger_lower | `sma_20 - (2 x StdDev(close, 20))` | sma_20 (#138), close (#19) standard deviation | Lower volatility band |
+| 148 | atr_14 | `EMA(true_range, span=14)` where `true_range = MAX(high-low, ABS(high-prev_close), ABS(low-prev_close))` | high (#17), low (#18), prev_close (#26) | Volatility measure for stop-loss sizing |
+| 149 | adx_14 | `EMA(ABS(+DI - -DI) / (+DI + -DI) x 100, 14)` | high, low, close, 14-period directional movement | >25 = strong trend; <20 = weak/no trend |
+| 150 | obv | `OBV_prev + (volume if close > prev_close, -volume if close < prev_close, 0 if equal)` | volume (#21), close (#19), prev_close (#26) | Cumulative; confirms price trends |
+| 151 | support_level | Custom pivot low: `lowest of recent significant lows within 20-period lookback` | low (#18), pivot calculation | Implementation-specific; use local minima |
+| 152 | resistance_level | Custom pivot high: `highest of recent significant highs within 20-period lookback` | high (#17), pivot calculation | Implementation-specific; use local maxima |
+
+### C.9 Metadata Fields (3 Fields — Category 13)
+
+| # | Field | Formula | Dependencies | Notes |
+|---|-------|---------|-------------|-------|
+| 158 | field_availability | `FOR EACH field IN 160_fields: {field_name: is_populated(stock, field)}` | All 160 fields per stock | Auto-updated after every extraction cycle |
+| 159 | field_last_updated | `FOR EACH field IN 160_fields: {field_name: last_write_timestamp(stock, field)}` | Write timestamps for all fields | Auto-updated on every database write |
+| 160 | multi_source_values | `FOR EACH multi_source_field: {field_name: {source1: value1, source2: value2, ...}}` | All multi-source field extractions | Used for cross-verification and confidence scoring |
+
+### C.10 Confidence Score Formula
+
+```
+Data Confidence Score (0-100) =
+    (Data Completeness x 0.40)   -- % of 160 fields populated
+  + (Data Freshness x 0.30)      -- % of fields within staleness threshold
+  + (Source Agreement x 0.15)    -- % of multi-source fields in agreement (within 2%)
+  + (Priority Coverage x 0.15)   -- Weighted completeness favoring Critical/Important fields
+
+Where Priority Coverage =
+    (Critical fields filled / 58) x 0.50
+  + (Important fields filled / 52) x 0.30
+  + (Standard fields filled / 35) x 0.15
+  + (Optional+Qual fields filled / 12) x 0.05
+```
+
+---
+
+## Appendix D: Validation Rules Quick Reference
+
+Complete validation rules organized by severity level for rapid implementation reference.
+
+### D.1 Hard Rejection Rules (Data Rejected if Failed)
+
+| Rule ID | Category | Validation | Action on Failure |
+|---------|----------|-----------|-------------------|
+| V-HR-01 | Price | `low <= open <= high AND low <= close <= high` | Reject entire day's price record |
+| V-HR-02 | Price | All prices (`open`, `high`, `low`, `close`) > 0 | Reject record |
+| V-HR-03 | Master | `symbol` non-empty, matches `[A-Z0-9&-]+` | Reject stock entry |
+| V-HR-04 | Master | `isin` matches `INE[0-9A-Z]{9}` (12 chars) | Reject; use backup source |
+| V-HR-05 | Volume | `volume` >= 0 | Reject record |
+| V-HR-06 | Shareholding | All holding percentages 0-100% | Reject filing data |
+| V-HR-07 | Technical | `rsi_14` in range 0-100 | Recalculate; reject if still invalid |
+| V-HR-08 | Technical | `bollinger_upper` > `sma_20` > `bollinger_lower` | Recalculate from source data |
+| V-HR-09 | News | `news_sentiment_score` in range [-1, +1] | Reject sentiment; re-run NLP |
+| V-HR-10 | News | `news_timestamp` not in the future | Reject article |
+| V-HR-11 | Cash Flow | `free_cash_flow` = `operating_cash_flow` - `capital_expenditure` (exact) | Recalculate; flag inconsistency |
+
+### D.2 Warning Rules (Data Accepted but Flagged)
+
+| Rule ID | Category | Validation | Flag Type |
+|---------|----------|-----------|-----------|
+| V-WN-01 | Price | `daily_return_pct` within +/-20% | EXTREME_MOVE (circuit limit check) |
+| V-WN-02 | Price | `daily_return_pct` within +/-50% | SUSPICIOUS (possible data error) |
+| V-WN-03 | Price | `gap_percentage` > 20% | LARGE_GAP |
+| V-WN-04 | Price | `volume_ratio` > 10 | VOLUME_ANOMALY |
+| V-WN-05 | Income | `revenue` < 0 | NEGATIVE_REVENUE (extremely rare) |
+| V-WN-06 | Income | `effective_tax_rate` outside 0-50% | TAX_ANOMALY |
+| V-WN-07 | Income | `operating_margin` outside -100% to +100% | MARGIN_EXTREME |
+| V-WN-08 | Balance | `current_ratio` < 0.1 or > 50 | SUSPICIOUS_RATIO |
+| V-WN-09 | Ratios | `roe` > 100% or < -100% | ROE_ANOMALOUS |
+| V-WN-10 | Ratios | `debt_to_equity` > 10 | HIGHLY_LEVERAGED |
+| V-WN-11 | Ratios | `interest_coverage` < 0 | NEGATIVE_COVERAGE |
+| V-WN-12 | Valuation | `pe_ratio` > 500 | EXTREME_PE |
+| V-WN-13 | Valuation | `pe_ratio` < 0 | NEGATIVE_PE (store as null) |
+| V-WN-14 | Balance | `total_assets` != approx `total_equity + total_liabilities` (>5% divergence) | BALANCE_MISMATCH |
+| V-WN-15 | Technical | `rsi_14` < 10 or > 90 | RSI_EXTREME |
+
+### D.3 Consistency Rules (Cross-Field Validation)
+
+| Rule ID | Validation | Fields Involved | Tolerance |
+|---------|-----------|----------------|-----------|
+| V-CR-01 | `52_week_high >= 52_week_low` | #34, #35 | Exact |
+| V-CR-02 | `vwap` between `low` and `high` | #27, #17, #18 | Exact |
+| V-CR-03 | `delivery_percentage` 0-100% | #23 | Exact |
+| V-CR-04 | `market_cap` = `close x shares_outstanding` | #93, #19, #11 | Within 1% rounding |
+| V-CR-05 | Sum of holdings approx 100% | #110+#112+#113+#114 | Within +/-2% |
+| V-CR-06 | `promoter_pledging` <= `promoter_holding` | #111, #110 | Exact |
+| V-CR-07 | `dividend_yield` >= 0 | #102 | Exact (0 if no dividends) |
+| V-CR-08 | `sma_200` > 0 | #140 | Exact |
+| V-CR-09 | `total_debt` >= 0 | #59 | Exact |
+| V-CR-10 | Temporal ordering: new quarter > previous quarter | Period dates | Exact |
+
+### D.4 Multi-Source Agreement Rules
+
+| Rule ID | Field(s) | Sources | Tolerance | Action on Disagreement |
+|---------|----------|---------|-----------|----------------------|
+| V-MS-01 | close price | NSE Bhavcopy, yfinance, BSE | 0.5% | Use NSE Bhavcopy as canonical |
+| V-MS-02 | market_cap | Calculated, Screener.in | 2% | Use calculated as canonical |
+| V-MS-03 | pe_ratio | Calculated, Screener.in, Trendlyne | 5% | Use calculated as canonical |
+| V-MS-04 | promoter_holding | BSE Filings, Trendlyne, Screener.in | 0.5% | Use BSE Filings as canonical |
+| V-MS-05 | eps | Screener.in, Calculated, Trendlyne | 2% | Use Screener.in as canonical |
+| V-MS-06 | net_profit | Screener.in, BSE Results, Trendlyne | 2% | Use Screener.in as canonical |
+| V-MS-07 | dividend_yield | Calculated, Screener.in, Trendlyne | 5% | Use calculated as canonical |
+| V-MS-08 | sector/industry | Screener.in, Trendlyne, BSE | Exact match | Use Screener.in as canonical |
+
+**Source Preference Hierarchy (descending priority):**
+1. Calculated (from verified inputs)
+2. Official Source (NSE/BSE filings)
+3. Screener.in
+4. Trendlyne
+5. yfinance
+
+### D.5 Staleness Thresholds
+
+| Data Frequency | Stale Warning | Critical Alert | Auto-Flag |
+|---------------|--------------|----------------|-----------|
+| Daily (OHLCV, technicals, daily valuations) | > 2 trading days | > 5 trading days | STALE_DAILY |
+| Weekly (peer averages, sector data) | > 10 calendar days | > 21 calendar days | STALE_WEEKLY |
+| Quarterly (financials, shareholding, ratios) | > 60 days from quarter end | > 90 days from quarter end | STALE_QUARTERLY |
+| Annual (balance sheet, cash flow) | > 6 months from FY end | > 12 months from FY end | STALE_ANNUAL |
+| Real-time (news, sentiment) | > 1 hour | > 6 hours | STALE_REALTIME |
+| On Event (corp actions, master data) | N/A | N/A | Checked on access |
+
+### D.6 Deal-Breaker Threshold Summary (D1-D10)
+
+These thresholds trigger automatic STRONG AVOID verdict in the scoring engine. The extraction system must guarantee these fields are available, fresh, and accurate.
+
+| Code | Field(s) | Threshold | Scoring Impact |
+|------|----------|-----------|---------------|
+| D1 | interest_coverage (#86) | < 2x | Cap scores at 35; verdict = STRONG AVOID |
+| D2 | sebi_investigation (#129) | = true | Cap scores at 35; verdict = STRONG AVOID |
+| D3 | revenue (#39), revenue_growth_yoy (#40) | Negative YoY for 3+ quarters | Cap scores at 35; verdict = STRONG AVOID |
+| D4 | operating_cash_flow (#74) | < 0 for 2+ years | Cap scores at 35; verdict = STRONG AVOID |
+| D5 | free_cash_flow (#78) | < 0 for 3+ years | Cap scores at 35; verdict = STRONG AVOID |
+| D6 | stock_status (#128) | Not ACTIVE | Cap scores at 35; verdict = STRONG AVOID |
+| D7 | promoter_pledging (#111) | > 80% | Cap scores at 35; verdict = STRONG AVOID |
+| D8 | debt_to_equity (#85) | > 5 | Cap scores at 35; verdict = STRONG AVOID |
+| D9 | credit_rating (#136) | Below investment grade | Cap scores at 35; verdict = STRONG AVOID |
+| D10 | volume (#21), avg_volume_20d (#38) | Avg volume < 50,000 | Cap scores at 35; verdict = STRONG AVOID |
+
+### D.7 Red Flag Penalty Summary (R1-R10)
+
+| Code | Field(s) | Trigger | Long-Term Penalty | Short-Term Penalty |
+|------|----------|---------|-------------------|-------------------|
+| R1 | debt_to_equity (#85) | > 1.5 | -15 | -10 |
+| R2 | interest_coverage (#86) | 2-3x range | -10 | -5 |
+| R3 | roe (#82) | < 10% | -12 | -5 |
+| R4 | promoter_holding (#110), promoter_holding_change (#115) | Decline > 5% | -10 | -15 |
+| R5 | promoter_pledging (#111) | > 0% | -10 | -15 |
+| R6 | distance_from_52w_high (#36) | > 30% | -5 | -10 |
+| R7 | operating_margin (#43) | Declining trend | -8 | -5 |
+| R8 | pe_ratio (#95), sector_avg_pe (#105) | P/E > 2x sector avg | -10 | -5 |
+| R9 | delivery_percentage (#23) | < 30% consistently | -5 | -8 |
+| R10 | contingent_liabilities (#73) | > 10% of net worth | -8 | -5 |
+
+### D.8 Quality Booster Summary (Q1-Q9)
+
+| Code | Field(s) | Trigger | Long-Term Boost | Short-Term Boost | Cap |
+|------|----------|---------|----------------|-----------------|-----|
+| Q1 | roe (#82) | > 20% for 5 years | +15 | +5 | Combined max +30 |
+| Q2 | revenue_growth_yoy (#40) | > 15% | +12 | +5 | Combined max +30 |
+| Q3 | debt_to_equity (#85) | = 0 (zero debt) | +10 | +5 | Combined max +30 |
+| Q4 | dividends_paid (#79), dividend_payout_ratio (#92) | 10+ consecutive years | +8 | +3 | Combined max +30 |
+| Q5 | promoter_holding_change (#115) | Increasing | +5 | +8 | Combined max +30 |
+| Q6 | fii_holding (#112), fii_holding_change (#116) | Increase > 2% | +5 | +8 | Combined max +30 |
+| Q7 | operating_margin (#43) | > 25% | +10 | +5 | Combined max +30 |
+| Q8 | 52_week_high (#34), distance_from_52w_high (#36) | Close to 52-week high | +5 | +10 | Combined max +30 |
+| Q9 | fcf_yield (#103) | > 5% | +8 | +5 | Combined max +30 |
+
+**Total Quality Booster cap: +30 points maximum** (sum of all triggered boosters, capped).
+
+---
+
+*End of Document — StockPulse Data Extraction System Blueprint v2.0*
 
