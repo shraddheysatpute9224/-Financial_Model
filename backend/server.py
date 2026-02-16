@@ -1093,6 +1093,131 @@ async def manually_check_alerts():
     }
 
 
+# ==================== DATA EXTRACTION PIPELINE ====================
+
+class ExtractionRequest(BaseModel):
+    """Request model for data extraction"""
+    symbols: List[str] = Field(..., description="List of stock symbols to extract")
+    sources: Optional[List[str]] = Field(None, description="Data sources to use (default: all)")
+
+
+class ExtractionResponse(BaseModel):
+    """Response model for data extraction"""
+    job_id: str
+    status: str
+    total_symbols: int
+    processed_symbols: int
+    failed_symbols: int
+    progress_percent: float
+    errors: List[str]
+    duration_seconds: Optional[float]
+
+
+@api_router.get("/extraction/status")
+async def get_extraction_status():
+    """Get status of data extraction pipeline and available features"""
+    return {
+        "pipeline_available": EXTRACTION_PIPELINE_AVAILABLE,
+        "real_data_available": REAL_DATA_AVAILABLE,
+        "use_real_data": USE_REAL_DATA,
+        "current_data_source": "Real (Yahoo Finance)" if REAL_DATA_AVAILABLE and USE_REAL_DATA else "Mock Data",
+        "available_extractors": ["yfinance", "nse_bhavcopy"] if EXTRACTION_PIPELINE_AVAILABLE else [],
+        "features": {
+            "field_definitions": 160,
+            "deal_breakers": 10,
+            "risk_penalties": 10,
+            "quality_boosters": 9,
+        }
+    }
+
+
+@api_router.post("/extraction/run", response_model=ExtractionResponse)
+async def run_extraction(request: ExtractionRequest):
+    """
+    Run the data extraction pipeline for specified symbols.
+    
+    This endpoint triggers the full extraction pipeline:
+    1. Raw data extraction from multiple sources
+    2. Data cleaning and normalization
+    3. Calculation of derived fields
+    4. Technical indicator computation
+    5. Validation against scoring rules
+    6. Quality assessment
+    """
+    global _pipeline_orchestrator
+    
+    if not EXTRACTION_PIPELINE_AVAILABLE:
+        raise HTTPException(
+            status_code=503,
+            detail="Data extraction pipeline not available"
+        )
+    
+    try:
+        # Initialize orchestrator if needed
+        if _pipeline_orchestrator is None:
+            _pipeline_orchestrator = PipelineOrchestrator(db=db)
+        
+        # Run the pipeline
+        job = await _pipeline_orchestrator.run(
+            symbols=request.symbols,
+            sources=request.sources
+        )
+        
+        # Return results
+        duration = None
+        if job.completed_at and job.started_at:
+            duration = (job.completed_at - job.started_at).total_seconds()
+        
+        return ExtractionResponse(
+            job_id=job.job_id,
+            status=job.status.value,
+            total_symbols=job.total_symbols,
+            processed_symbols=job.processed_symbols,
+            failed_symbols=job.failed_symbols,
+            progress_percent=job.progress_pct,
+            errors=job.errors[:10],  # Limit errors
+            duration_seconds=duration
+        )
+        
+    except Exception as e:
+        logger.error(f"Extraction pipeline error: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Extraction failed: {str(e)}"
+        )
+
+
+@api_router.get("/extraction/fields")
+async def get_field_definitions():
+    """Get all 160 field definitions with their metadata"""
+    try:
+        from data_extraction.config.field_definitions import FIELD_DEFINITIONS, FIELDS_BY_CATEGORY
+        
+        return {
+            "total_fields": len(FIELD_DEFINITIONS),
+            "categories": list(FIELDS_BY_CATEGORY.keys()),
+            "fields_by_category": {
+                cat: [
+                    {
+                        "name": f["name"],
+                        "display_name": f["display_name"],
+                        "data_type": f["data_type"],
+                        "unit": f.get("unit"),
+                        "is_derived": f.get("is_derived", False),
+                        "priority": f.get("priority", "medium"),
+                    }
+                    for f in fields
+                ]
+                for cat, fields in FIELDS_BY_CATEGORY.items()
+            }
+        }
+    except ImportError:
+        raise HTTPException(
+            status_code=503,
+            detail="Field definitions not available"
+        )
+
+
 # Include router
 app.include_router(api_router)
 
