@@ -677,7 +677,7 @@ def generate_analysis(stock_data: Dict) -> Dict:
         technical_score * LONG_TERM_WEIGHTS["technicals"] +
         quality_score * LONG_TERM_WEIGHTS["quality"]
     )
-    lt_penalty = apply_risk_penalties(stock_data, True)
+    lt_penalty, lt_penalties_list = apply_risk_penalties(stock_data, True)
     lt_boost = apply_quality_boosters(stock_data, True)
     lt_ml = calculate_ml_adjustment()
     long_term_score = max(0, min(100, lt_base + lt_penalty + lt_boost + lt_ml))
@@ -689,7 +689,7 @@ def generate_analysis(stock_data: Dict) -> Dict:
         technical_score * SHORT_TERM_WEIGHTS["technicals"] +
         quality_score * SHORT_TERM_WEIGHTS["quality"]
     )
-    st_penalty = apply_risk_penalties(stock_data, False)
+    st_penalty, st_penalties_list = apply_risk_penalties(stock_data, False)
     st_boost = apply_quality_boosters(stock_data, False)
     st_ml = calculate_ml_adjustment()
     short_term_score = max(0, min(100, st_base + st_penalty + st_boost + st_ml))
