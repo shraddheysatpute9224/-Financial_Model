@@ -228,20 +228,110 @@ RISK_PENALTIES = [
     },
 ]
 
-# TIER 3: QUALITY BOOSTERS (Capped at +30 total)
+# =============================================================================
+# TIER 3: QUALITY BOOSTERS (Q1-Q9)
+# Positive score additions - capped at +30 total
+# =============================================================================
 QUALITY_BOOSTERS = [
-    {"rule": "roe_excellent", "field": "roe", "threshold": 20, "operator": "gt", "lt_boost": 15, "st_boost": 5,
-     "description": "ROE > 20% consistently"},
-    {"rule": "growth_strong", "field": "revenue_growth_yoy", "threshold": 15, "operator": "gt", "lt_boost": 12, "st_boost": 5,
-     "description": "Revenue CAGR > 15%"},
-    {"rule": "zero_debt", "field": "debt_to_equity", "threshold": 0.1, "operator": "lt", "lt_boost": 10, "st_boost": 5,
-     "description": "Zero debt or net cash positive"},
-    {"rule": "high_margin", "field": "operating_margin", "threshold": 25, "operator": "gt", "lt_boost": 10, "st_boost": 5,
-     "description": "Operating margin > 25%"},
-    {"rule": "promoter_increased", "field": "promoter_holding", "threshold": 50, "operator": "gt", "lt_boost": 8, "st_boost": 10,
-     "description": "High promoter holding"},
-    {"rule": "fii_interest", "field": "fii_holding", "threshold": 20, "operator": "gt", "lt_boost": 5, "st_boost": 8,
-     "description": "Strong FII interest"},
+    # Q1: ROE > 20% consistently - Exceptional capital efficiency
+    {
+        "code": "Q1",
+        "rule": "roe_excellent", 
+        "field": "roe", 
+        "threshold": 20, 
+        "operator": "gt", 
+        "lt_boost": 15, 
+        "st_boost": 5,
+        "description": "Q1: ROE > 20% - Exceptional capital efficiency"
+    },
+    # Q2: Revenue CAGR > 15% - Strong growth trajectory
+    {
+        "code": "Q2",
+        "rule": "growth_strong", 
+        "field": "revenue_growth_yoy", 
+        "threshold": 15, 
+        "operator": "gt", 
+        "lt_boost": 12, 
+        "st_boost": 5,
+        "description": "Q2: Revenue CAGR > 15% - Strong growth"
+    },
+    # Q3: Zero debt or net cash positive - Financial fortress
+    {
+        "code": "Q3",
+        "rule": "zero_debt", 
+        "field": "debt_to_equity", 
+        "threshold": 0.1, 
+        "operator": "lt", 
+        "lt_boost": 10, 
+        "st_boost": 5,
+        "description": "Q3: Zero/Low Debt - Financial fortress"
+    },
+    # Q4: 10+ year consecutive dividend payer - Shareholder commitment
+    {
+        "code": "Q4",
+        "rule": "consistent_dividend", 
+        "field": "consecutive_dividend_years", 
+        "threshold": 10, 
+        "operator": "gte", 
+        "lt_boost": 8, 
+        "st_boost": 3,
+        "description": "Q4: 10+ Year Dividends - Shareholder commitment"
+    },
+    # Q5: Operating margin > 25% - Pricing power evidence
+    {
+        "code": "Q5",
+        "rule": "high_margin", 
+        "field": "operating_margin", 
+        "threshold": 25, 
+        "operator": "gt", 
+        "lt_boost": 10, 
+        "st_boost": 5,
+        "description": "Q5: Operating Margin > 25% - Pricing power"
+    },
+    # Q6: Promoter holding > 50% and increased last QoQ - Skin in the game
+    {
+        "code": "Q6",
+        "rule": "promoter_holding_strong", 
+        "field": "promoter_holding", 
+        "threshold": 50, 
+        "operator": "gt", 
+        "lt_boost": 8, 
+        "st_boost": 10,
+        "description": "Q6: Promoter Holding > 50% - Strong insider alignment"
+    },
+    # Q7: FII holding > 20% - Institutional validation
+    {
+        "code": "Q7",
+        "rule": "fii_interest", 
+        "field": "fii_holding", 
+        "threshold": 20, 
+        "operator": "gt", 
+        "lt_boost": 5, 
+        "st_boost": 8,
+        "description": "Q7: FII Holding > 20% - Institutional validation"
+    },
+    # Q8: Breaking to 52-week high with volume > 2x avg - Momentum confirmation
+    {
+        "code": "Q8",
+        "rule": "breakout_52w_high", 
+        "field": "breakout_with_volume", 
+        "threshold": True, 
+        "operator": "eq", 
+        "lt_boost": 3, 
+        "st_boost": 12,
+        "description": "Q8: 52W High Breakout with Volume - Momentum confirmation"
+    },
+    # Q9: FCF yield > 5% - Cash generation excellence
+    {
+        "code": "Q9",
+        "rule": "fcf_yield_high", 
+        "field": "fcf_yield", 
+        "threshold": 5, 
+        "operator": "gt", 
+        "lt_boost": 8, 
+        "st_boost": 4,
+        "description": "Q9: FCF Yield > 5% - Cash generation excellence"
+    },
 ]
 
 # Scoring weights
