@@ -520,6 +520,9 @@ class StockAnalysisPlatformTester:
             self.test_reports_endpoints()
             self.test_search_endpoints()
             
+            # Add the scoring engine test
+            self.test_scoring_engine()
+            
         except KeyboardInterrupt:
             print("\n⚠️  Tests interrupted by user")
         except Exception as e:
