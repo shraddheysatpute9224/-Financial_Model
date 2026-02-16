@@ -1038,10 +1038,10 @@ def generate_analysis(stock_data: Dict) -> Dict:
     else:
         verdict = "STRONG AVOID"
     
-    # Confidence calculation
-    data_completeness = 0.85 + random.uniform(-0.1, 0.1)
-    confidence_score = data_completeness * 0.4 + 0.92 * 0.3 + 0.78 * 0.15 + 0.62 * 0.15
-    confidence_level = "HIGH" if confidence_score >= 0.8 else "MEDIUM" if confidence_score >= 0.6 else "LOW"
+    # Confidence calculation using proper formula
+    confidence_data = calculate_confidence_score(stock_data)
+    confidence_score = confidence_data["confidence_score"]
+    confidence_level = confidence_data["confidence_level"]
     
     # Generate strengths and risks
     strengths = []
