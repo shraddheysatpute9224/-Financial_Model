@@ -295,33 +295,147 @@ def calculate_technical_score(data: Dict, current_price: float) -> float:
     return sum(scores) / len(scores) if scores else 50
 
 
-def check_deal_breakers(stock_data: Dict) -> List[Dict]:
-    """Check for deal-breaker conditions"""
+def check_deal_breakers(stock_data: Dict, is_short_term: bool = False) -> List[Dict]:
+    """
+    Check for deal-breaker conditions (D1-D10).
+    Returns list of all deal-breakers with their triggered status.
+    """
     triggered = []
     fund = stock_data.get("fundamentals", {})
     tech = stock_data.get("technicals", {})
     share = stock_data.get("shareholding", {})
+    corp_actions = stock_data.get("corporate_actions", {})
     
-    all_data = {**fund, **tech, **share}
+    # Combine all data sources for easy field lookup
+    all_data = {
+        **fund, 
+        **tech, 
+        **share,
+        **corp_actions,
+        # Set defaults for fields that might not exist
+        "stock_status": stock_data.get("stock_status", "ACTIVE"),
+        "sebi_investigation": stock_data.get("sebi_investigation", False),
+        "credit_rating": stock_data.get("credit_rating", ""),
+        # Calculate derived fields for D3, D4, D5
+        "revenue_declining_years": _calculate_declining_revenue_years(fund),
+        "negative_ocf_years": _calculate_negative_ocf_years(fund),
+        "negative_fcf_years": _calculate_negative_fcf_years(fund),
+    }
     
     for db in DEAL_BREAKERS:
-        value = all_data.get(db["field"], 0)
+        # Skip short-term-only checks when evaluating long-term
+        if db.get("short_term_only") and not is_short_term:
+            triggered.append({
+                "code": db.get("code", ""),
+                "rule": db["rule"],
+                "triggered": False,
+                "value": all_data.get(db["field"], 0),
+                "threshold": db["threshold"],
+                "description": db["description"],
+                "severity": db.get("severity", "CRITICAL"),
+                "skipped": True,
+                "skip_reason": "Long-term analysis - liquidity not critical"
+            })
+            continue
+            
+        value = all_data.get(db["field"], None)
         is_triggered = False
         
-        if db["operator"] == "lt" and value < db["threshold"]:
-            is_triggered = True
-        elif db["operator"] == "gt" and value > db["threshold"]:
-            is_triggered = True
+        # Handle different operator types
+        operator = db["operator"]
+        threshold = db["threshold"]
+        
+        if value is None:
+            # Missing data - cannot evaluate, mark as not triggered but flag
+            is_triggered = False
+        elif operator == "lt":
+            is_triggered = value < threshold
+        elif operator == "gt":
+            is_triggered = value > threshold
+        elif operator == "gte":
+            is_triggered = value >= threshold
+        elif operator == "lte":
+            is_triggered = value <= threshold
+        elif operator == "eq":
+            is_triggered = value == threshold
+        elif operator == "neq":
+            is_triggered = value != threshold
+        elif operator == "in":
+            # For checking if value is in a list (e.g., credit ratings)
+            if isinstance(threshold, list):
+                value_upper = str(value).upper() if value else ""
+                is_triggered = value_upper in [str(t).upper() for t in threshold]
+            else:
+                is_triggered = value == threshold
         
         triggered.append({
+            "code": db.get("code", ""),
             "rule": db["rule"],
             "triggered": is_triggered,
-            "value": value,
-            "threshold": db["threshold"],
-            "description": db["description"]
+            "value": value if value is not None else "N/A",
+            "threshold": threshold,
+            "description": db["description"],
+            "severity": db.get("severity", "CRITICAL"),
+            "skipped": False
         })
     
     return triggered
+
+
+def _calculate_declining_revenue_years(fund: Dict) -> int:
+    """Calculate consecutive years of revenue decline for D3"""
+    revenue_history = fund.get("revenue_history", [])
+    if not revenue_history or len(revenue_history) < 2:
+        # Check if current YoY growth is negative
+        current_growth = fund.get("revenue_growth_yoy", 0)
+        if current_growth < 0:
+            return 1
+        return 0
+    
+    declining_years = 0
+    for i in range(1, len(revenue_history)):
+        if revenue_history[i] < revenue_history[i-1]:
+            declining_years += 1
+        else:
+            declining_years = 0  # Reset if growth resumes
+    
+    return declining_years
+
+
+def _calculate_negative_ocf_years(fund: Dict) -> int:
+    """Calculate consecutive years of negative Operating Cash Flow for D4"""
+    ocf_history = fund.get("operating_cash_flow_history", [])
+    if not ocf_history:
+        # Check current OCF
+        current_ocf = fund.get("operating_cash_flow", 0)
+        return 1 if current_ocf < 0 else 0
+    
+    negative_years = 0
+    for ocf in reversed(ocf_history):  # Most recent first
+        if ocf < 0:
+            negative_years += 1
+        else:
+            break
+    
+    return negative_years
+
+
+def _calculate_negative_fcf_years(fund: Dict) -> int:
+    """Calculate consecutive years of negative Free Cash Flow for D5"""
+    fcf_history = fund.get("free_cash_flow_history", [])
+    if not fcf_history:
+        # Check current FCF
+        current_fcf = fund.get("free_cash_flow", 0)
+        return 1 if current_fcf < 0 else 0
+    
+    negative_years = 0
+    for fcf in reversed(fcf_history):  # Most recent first
+        if fcf < 0:
+            negative_years += 1
+        else:
+            break
+    
+    return negative_years
 
 
 def apply_risk_penalties(stock_data: Dict, is_long_term: bool) -> float:
