@@ -218,3 +218,5 @@ agent_communication:
       message: "Completed medium priority items: Investment Checklists and Data Extraction Pipeline"
     - agent: "testing"
       message: "✅ SCORING ENGINE TESTING COMPLETE: All 4 high-priority tasks verified successfully. Deal-breakers (D1-D10), Risk Penalties (R1-R10), Quality Boosters (Q1-Q9), and Confidence Score calculation all working correctly. API responses contain proper structure and data. Tested with RELIANCE, TCS, HDFCBANK symbols. Deal-breaker logic properly caps scores at 35 when triggered. No critical issues found. Backend APIs fully functional for scoring engine implementation."
+    - agent: "testing"
+      message: "✅ MEDIUM PRIORITY TESTING COMPLETE: Investment Checklists and Data Extraction Pipeline API both verified successfully. Investment checklists contain proper short-term (10 items ST1-ST10) and long-term (13 items LT1-LT13) structures with all required fields and summary objects. Data extraction pipeline endpoints return correct field definitions (160 fields across 13 categories) and status information. All backend APIs working correctly. No critical issues found."
