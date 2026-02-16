@@ -1129,6 +1129,7 @@ def generate_analysis(stock_data: Dict) -> Dict:
             "lt_total_boost": lt_boost,
             "st_total_boost": st_boost,
         },
+        "investment_checklists": generate_investment_checklists(stock_data),
         "top_strengths": strengths[:3] if strengths else ["Diversified business model"],
         "top_risks": risks[:5] if risks else ["General market risk"],
         "bull_case": bull_case,
