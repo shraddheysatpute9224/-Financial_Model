@@ -231,6 +231,11 @@ def generate_technicals(prices: List[Dict]) -> Dict:
     
     # 52 week high/low
     year_prices = closes[-252:] if len(closes) >= 252 else closes
+    high_52_week = max(year_prices)
+    low_52_week = min(year_prices)
+    
+    # Distance from 52-week high (for R6)
+    distance_from_52w_high = ((current - high_52_week) / high_52_week) * 100 if high_52_week > 0 else 0
     
     return {
         "sma_50": round(sma_50, 2),
@@ -243,10 +248,13 @@ def generate_technicals(prices: List[Dict]) -> Dict:
         "bollinger_lower": round(bb_mean - 2 * bb_std, 2),
         "bollinger_middle": round(bb_mean, 2),
         "volume_avg_20": int(sum(p["volume"] for p in prices[-20:]) / 20),
-        "high_52_week": round(max(year_prices), 2),
-        "low_52_week": round(min(year_prices), 2),
+        "high_52_week": round(high_52_week, 2),
+        "low_52_week": round(low_52_week, 2),
         "support_level": round(current * 0.95, 2),
         "resistance_level": round(current * 1.05, 2),
+        # Additional fields for risk penalties
+        "distance_from_52w_high": round(distance_from_52w_high, 2),  # For R6
+        "delivery_percentage": round(random.uniform(25, 65), 2),  # For R9
     }
 
 
