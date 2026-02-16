@@ -22,10 +22,12 @@ def test_investment_checklists():
                 
             data = response.json()
             
-            # Check for investment_checklists
-            investment_checklists = data.get("investment_checklists")
+            # Check for investment_checklists in analysis
+            analysis = data.get("analysis", {})
+            investment_checklists = analysis.get("investment_checklists")
             if not investment_checklists:
                 print(f"❌ No investment_checklists found for {symbol}")
+                print(f"   Available analysis keys: {list(analysis.keys())}")
                 continue
                 
             print(f"✅ Investment checklists found for {symbol}")
