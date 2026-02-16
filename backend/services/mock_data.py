@@ -75,7 +75,7 @@ def generate_price_history(base_price: float, days: int = 365) -> List[Dict]:
 
 
 def generate_fundamentals(sector: str, cap: str) -> Dict:
-    """Generate realistic fundamental data based on sector"""
+    """Generate realistic fundamental data based on sector with history for deal-breaker checks"""
     sector_profiles = {
         "IT": {"margin": (15, 25), "roe": (18, 35), "growth": (10, 25), "de": (0, 0.3)},
         "Financial": {"margin": (15, 30), "roe": (12, 20), "growth": (12, 22), "de": (5, 10)},
@@ -100,6 +100,49 @@ def generate_fundamentals(sector: str, cap: str) -> Dict:
     operating_margin = random.uniform(*profile["margin"])
     net_margin = operating_margin * random.uniform(0.5, 0.8)
     
+    current_ocf = revenue * random.uniform(0.08, 0.2)
+    current_fcf = revenue * random.uniform(0.05, 0.15)
+    
+    # Generate historical data for D3, D4, D5 deal-breaker checks
+    # Revenue history (5 years) - mostly growing for healthy companies
+    revenue_growth_rate = random.uniform(0.03, 0.15)
+    revenue_history = []
+    base_rev = revenue
+    for i in range(5):
+        # 90% chance of growth in historical data
+        if random.random() > 0.1:
+            factor = 1 / (1 + revenue_growth_rate * (5 - i))
+        else:
+            factor = 1 / (1 - random.uniform(0.02, 0.08) * (5 - i))
+        revenue_history.append(round(base_rev * factor, 2))
+    revenue_history.append(round(revenue, 2))  # Current year
+    
+    # OCF history (5 years) - mostly positive for healthy companies
+    ocf_history = []
+    for i in range(5):
+        if random.random() > 0.15:  # 85% chance of positive OCF
+            ocf_history.append(round(revenue_history[i] * random.uniform(0.05, 0.2), 2))
+        else:
+            ocf_history.append(round(-revenue_history[i] * random.uniform(0.01, 0.05), 2))
+    ocf_history.append(round(current_ocf, 2))
+    
+    # FCF history (5 years)
+    fcf_history = []
+    for i in range(5):
+        if random.random() > 0.2:  # 80% chance of positive FCF
+            fcf_history.append(round(revenue_history[i] * random.uniform(0.03, 0.12), 2))
+        else:
+            fcf_history.append(round(-revenue_history[i] * random.uniform(0.01, 0.05), 2))
+    fcf_history.append(round(current_fcf, 2))
+    
+    # Operating margin history (for R7)
+    om_history = []
+    base_margin = operating_margin
+    for i in range(5):
+        variation = random.uniform(-2, 2)
+        om_history.append(round(base_margin + variation, 2))
+    om_history.append(round(operating_margin, 2))
+    
     return {
         "revenue_ttm": round(revenue, 2),
         "revenue_growth_yoy": round(random.uniform(*profile["growth"]), 2),
@@ -113,10 +156,21 @@ def generate_fundamentals(sector: str, cap: str) -> Dict:
         "roic": round(random.uniform(10, 25), 2),
         "debt_to_equity": round(random.uniform(*profile["de"]), 2),
         "interest_coverage": round(random.uniform(3, 20), 2),
-        "free_cash_flow": round(revenue * random.uniform(0.05, 0.15), 2),
-        "operating_cash_flow": round(revenue * random.uniform(0.08, 0.2), 2),
+        "free_cash_flow": round(current_fcf, 2),
+        "operating_cash_flow": round(current_ocf, 2),
         "current_ratio": round(random.uniform(1.0, 3.0), 2),
         "quick_ratio": round(random.uniform(0.8, 2.5), 2),
+        # Historical data for D3, D4, D5 deal-breaker checks
+        "revenue_history": revenue_history,
+        "operating_cash_flow_history": ocf_history,
+        "free_cash_flow_history": fcf_history,
+        "operating_margin_history": om_history,
+        # FCF yield calculation
+        "fcf_yield": round((current_fcf / revenue) * 100, 2) if revenue > 0 else 0,
+        # Delivery percentage (for R9)
+        "delivery_percentage": round(random.uniform(25, 65), 2),
+        # Contingent liabilities as % of net worth (for R10)
+        "contingent_liabilities_pct": round(random.uniform(0, 15), 2),
     }
 
 
