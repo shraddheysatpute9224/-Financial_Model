@@ -175,11 +175,14 @@ backend:
     file: "backend/services/scoring_engine.py, frontend/src/pages/StockAnalyzer.jsx"
     stuck_count: 0
     priority: "medium"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: true
           agent: "main"
           comment: "Implemented Short-Term (10 items) and Long-Term (13 items) investment checklists with deal-breaker indicators"
+        - working: true
+          agent: "testing"
+          comment: "✅ VERIFIED: Investment checklists fully implemented and working. Short-term checklist has 10 items (ST1-ST10) with proper structure including id, criterion, passed (boolean), value, is_deal_breaker, importance fields. Long-term checklist has 13 items (LT1-LT13) with same structure. Both include summary objects with total, passed, failed, deal_breaker_failures, verdict (PASS/FAIL/CAUTION), and score. Tested with TCS and RELIANCE symbols. All validation passed."
 
   - task: "Data Extraction Pipeline API"
     implemented: true
@@ -187,11 +190,14 @@ backend:
     file: "backend/server.py"
     stuck_count: 0
     priority: "medium"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: true
           agent: "main"
           comment: "Added /api/extraction/status, /api/extraction/fields, /api/extraction/run endpoints"
+        - working: true
+          agent: "testing"
+          comment: "✅ VERIFIED: Data extraction pipeline API endpoints working correctly. GET /api/extraction/status returns pipeline_available (true), available_extractors (['yfinance', 'nse_bhavcopy']), and features object with correct counts (160 field_definitions, 10 deal_breakers, 10 risk_penalties, 9 quality_boosters). GET /api/extraction/fields returns 160 total fields across 13 categories with proper field structure including name, field_id, data_type, unit, priority, update_frequency, source, used_for. All validation passed."
 
 metadata:
   created_by: "main_agent"
