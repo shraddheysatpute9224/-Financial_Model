@@ -847,6 +847,10 @@ class StockAnalysisPlatformTester:
             # Add the scoring engine test
             self.test_scoring_engine()
             
+            # Add medium priority tests
+            self.test_investment_checklists()
+            self.test_data_extraction_pipeline()
+            
         except KeyboardInterrupt:
             print("\n⚠️  Tests interrupted by user")
         except Exception as e:
