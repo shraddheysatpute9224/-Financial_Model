@@ -524,10 +524,12 @@ class StockAnalysisPlatformTester:
                 print(f"❌ Failed to get stock data for {symbol}")
                 continue
             
-            # Check for investment_checklists object
-            investment_checklists = stock_data.get("investment_checklists")
+            # Check for investment_checklists object in analysis
+            analysis = stock_data.get("analysis", {})
+            investment_checklists = analysis.get("investment_checklists")
             if not investment_checklists:
                 print(f"❌ No investment_checklists object found for {symbol}")
+                print(f"   Available analysis keys: {list(analysis.keys())}")
                 continue
                 
             print(f"✅ Investment checklists object found for {symbol}")
