@@ -1,17 +1,114 @@
-from typing import Dict, List, Tuple, Any
+from typing import Dict, List, Tuple, Any, Optional
 import random
+from datetime import datetime
 
 
-# TIER 1: HARD DEAL-BREAKERS
+# =============================================================================
+# TIER 1: HARD DEAL-BREAKERS (D1-D10)
+# If ANY condition is TRUE, stock is immediately rejected. Score capped at 35.
+# =============================================================================
 DEAL_BREAKERS = [
-    {"rule": "interest_coverage_low", "field": "interest_coverage", "threshold": 2.0, "operator": "lt", 
-     "description": "Interest Coverage Ratio < 2.0x - Cannot service debt"},
-    {"rule": "debt_to_equity_extreme", "field": "debt_to_equity", "threshold": 5.0, "operator": "gt",
-     "description": "Debt-to-Equity > 5.0 - Excessive leverage"},
-    {"rule": "promoter_pledging_extreme", "field": "promoter_pledging", "threshold": 80, "operator": "gt",
-     "description": "Promoter Pledging > 80% - High promoter stress"},
-    {"rule": "volume_too_low", "field": "volume_avg_20", "threshold": 50000, "operator": "lt",
-     "description": "Average Daily Volume < 50,000 - Illiquid stock"},
+    # D1: Interest Coverage Ratio < 2.0x - Cannot service debt - bankruptcy risk
+    {
+        "code": "D1",
+        "rule": "interest_coverage_low", 
+        "field": "interest_coverage", 
+        "threshold": 2.0, 
+        "operator": "lt", 
+        "description": "D1: Interest Coverage < 2.0x - Cannot service debt",
+        "severity": "CRITICAL"
+    },
+    # D2: SEBI Investigation = true - Financial statements untrustworthy
+    {
+        "code": "D2",
+        "rule": "sebi_investigation", 
+        "field": "sebi_investigation", 
+        "threshold": True, 
+        "operator": "eq", 
+        "description": "D2: Active SEBI Investigation - Regulatory risk",
+        "severity": "CRITICAL"
+    },
+    # D3: Revenue declining 3+ consecutive years - Business structurally failing
+    {
+        "code": "D3",
+        "rule": "revenue_declining_3yr", 
+        "field": "revenue_declining_years", 
+        "threshold": 3, 
+        "operator": "gte", 
+        "description": "D3: Revenue Declining 3+ Years - Business failing",
+        "severity": "CRITICAL"
+    },
+    # D4: Negative Operating Cash Flow for 2+ years - Cash burn spiral
+    {
+        "code": "D4",
+        "rule": "negative_ocf_2yr", 
+        "field": "negative_ocf_years", 
+        "threshold": 2, 
+        "operator": "gte", 
+        "description": "D4: Negative OCF 2+ Years - Cash burn issue",
+        "severity": "CRITICAL"
+    },
+    # D5: Negative Free Cash Flow for 3+ years - No turnaround plan
+    {
+        "code": "D5",
+        "rule": "negative_fcf_3yr", 
+        "field": "negative_fcf_years", 
+        "threshold": 3, 
+        "operator": "gte", 
+        "description": "D5: Negative FCF 3+ Years - Unsustainable business",
+        "severity": "CRITICAL"
+    },
+    # D6: Stock halted/suspended/delisting announced - Untradeable
+    {
+        "code": "D6",
+        "rule": "stock_not_active", 
+        "field": "stock_status", 
+        "threshold": "ACTIVE", 
+        "operator": "neq", 
+        "description": "D6: Stock Not Active - Halted/Suspended/Delisting",
+        "severity": "CRITICAL"
+    },
+    # D7: Promoter pledging > 80% - Forced selling imminent
+    {
+        "code": "D7",
+        "rule": "promoter_pledging_extreme", 
+        "field": "promoter_pledging", 
+        "threshold": 80, 
+        "operator": "gt",
+        "description": "D7: Promoter Pledging > 80% - High promoter stress",
+        "severity": "CRITICAL"
+    },
+    # D8: Debt-to-Equity > 5.0 (non-financial) - Insolvency risk
+    {
+        "code": "D8",
+        "rule": "debt_to_equity_extreme", 
+        "field": "debt_to_equity", 
+        "threshold": 5.0, 
+        "operator": "gt",
+        "description": "D8: Debt-to-Equity > 5.0 - Excessive leverage",
+        "severity": "CRITICAL"
+    },
+    # D9: Credit rating = D (Default) or withdrawn - Default imminent
+    {
+        "code": "D9",
+        "rule": "credit_rating_default", 
+        "field": "credit_rating", 
+        "threshold": ["D", "DEFAULT", "WITHDRAWN", "NR"], 
+        "operator": "in", 
+        "description": "D9: Credit Rating D/Withdrawn - Default risk",
+        "severity": "CRITICAL"
+    },
+    # D10: Average daily volume < 50,000 (short-term only) - Liquidity trap
+    {
+        "code": "D10",
+        "rule": "volume_too_low", 
+        "field": "volume_avg_20", 
+        "threshold": 50000, 
+        "operator": "lt",
+        "description": "D10: Avg Volume < 50,000 - Illiquid stock",
+        "severity": "CRITICAL",
+        "short_term_only": True
+    },
 ]
 
 # TIER 2: RISK PENALTIES
