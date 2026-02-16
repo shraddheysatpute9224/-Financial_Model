@@ -592,6 +592,10 @@ def generate_analysis(stock_data: Dict) -> Dict:
     if tech.get("rsi_14", 50) > 70:
         risks.append("Technically overbought - potential correction")
     
+    # Add triggered deal-breakers to risks
+    for db in triggered_lt_dbs:
+        risks.append(f"⚠️ {db['description']}")
+    
     # Bull/Bear/Base cases
     bull_case = {
         "target_price": round(current_price * 1.25, 2),
@@ -628,9 +632,16 @@ def generate_analysis(stock_data: Dict) -> Dict:
             "risk_score": round(100 + lt_penalty, 1),  # Higher is better
             "ml_adjustment": round(lt_ml, 1),
         },
-        "deal_breakers": deal_breakers,
+        "deal_breakers": lt_deal_breakers,  # Primary deal-breakers list for UI
+        "deal_breakers_st": st_deal_breakers,  # Short-term specific
+        "triggered_deal_breakers": {
+            "long_term": triggered_lt_dbs,
+            "short_term": triggered_st_dbs,
+            "has_lt_deal_breaker": has_lt_deal_breaker,
+            "has_st_deal_breaker": has_st_deal_breaker,
+        },
         "top_strengths": strengths[:3] if strengths else ["Diversified business model"],
-        "top_risks": risks[:3] if risks else ["General market risk"],
+        "top_risks": risks[:5] if risks else ["General market risk"],
         "bull_case": bull_case,
         "bear_case": bear_case,
         "base_case": base_case,
