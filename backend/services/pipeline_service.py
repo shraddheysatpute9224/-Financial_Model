@@ -211,7 +211,12 @@ class DataPipelineService:
             except Exception as e:
                 logger.warning(f"Could not load job history: {e}")
         
-        logger.info("Data Pipeline Service initialized")
+        # Auto-start scheduler for continuous data collection
+        if self.AUTO_START_SCHEDULER and self.grow_extractor:
+            logger.info(f"Auto-starting scheduler with {self.DEFAULT_SCHEDULER_INTERVAL} minute interval")
+            await self.start_scheduler(interval_minutes=self.DEFAULT_SCHEDULER_INTERVAL)
+        
+        logger.info(f"Data Pipeline Service initialized with {len(self.DEFAULT_SYMBOLS)} symbols")
     
     async def start_scheduler(self, interval_minutes: int = 30):
         """Start the automatic extraction scheduler"""
