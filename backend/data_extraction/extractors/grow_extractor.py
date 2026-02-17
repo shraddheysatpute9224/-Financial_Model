@@ -334,9 +334,10 @@ class GrowwAPIExtractor:
             try:
                 start_time = time.time()
                 
+                # Use the correct Groww API endpoint
                 success, data, latency = await self._make_request(
                     "GET",
-                    "/data/quote",
+                    "/live-data/quote",
                     params={
                         "exchange": exchange,
                         "segment": segment,
@@ -345,13 +346,23 @@ class GrowwAPIExtractor:
                 )
                 
                 if success:
-                    return ExtractionResult(
-                        status=ExtractionStatus.SUCCESS,
-                        symbol=symbol,
-                        data=self._transform_quote_data(data, symbol),
-                        retries=retries,
-                        latency_ms=latency
-                    )
+                    # Check if API returned success status
+                    if data.get("status") == "SUCCESS":
+                        return ExtractionResult(
+                            status=ExtractionStatus.SUCCESS,
+                            symbol=symbol,
+                            data=self._transform_quote_data(data.get("payload", data), symbol),
+                            retries=retries,
+                            latency_ms=latency
+                        )
+                    else:
+                        last_error = data.get("error", {}).get("message", "API returned failure status")
+                        retries += 1
+                        self.metrics.retry_count += 1
+                        if retries <= self.MAX_RETRIES:
+                            backoff = self._calculate_backoff(retries)
+                            await asyncio.sleep(backoff)
+                        continue
                 elif data.get("code") == 429:
                     # Rate limit - wait and retry
                     retries += 1
