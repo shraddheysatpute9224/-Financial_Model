@@ -170,7 +170,7 @@ class DataPipelineService:
             await self.grow_extractor.initialize()
         
         # Load job history from database if available
-        if self.db:
+        if self.db is not None:
             try:
                 history = await self.db.pipeline_jobs.find(
                     {}, {"_id": 0}
