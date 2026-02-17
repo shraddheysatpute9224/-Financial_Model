@@ -1570,11 +1570,23 @@ async def startup_event():
 @app.on_event("shutdown")
 async def shutdown_event():
     """Cleanup on app shutdown"""
+    global _data_pipeline_service
+    
     logger.info("Shutting down StockPulse API...")
     
     if WEBSOCKET_AVAILABLE:
         await price_broadcaster.stop()
         logger.info("Price broadcaster stopped")
+    
+    # Cleanup Data Pipeline Service
+    if _data_pipeline_service:
+        try:
+            await _data_pipeline_service.stop_scheduler()
+            if _data_pipeline_service.grow_extractor:
+                await _data_pipeline_service.grow_extractor.close()
+            logger.info("Data pipeline service stopped")
+        except Exception as e:
+            logger.error(f"Error stopping pipeline service: {e}")
     
     client.close()
     logger.info("Database connection closed")
