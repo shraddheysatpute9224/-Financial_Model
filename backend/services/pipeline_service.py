@@ -122,15 +122,47 @@ class DataPipelineService:
     Handles scheduling, execution, and monitoring
     """
     
-    # Default Indian stock symbols for extraction
+    # Default Indian stock symbols for extraction - NIFTY 50 + NIFTY Next 50 + Popular Mid-caps
     DEFAULT_SYMBOLS = [
+        # NIFTY 50 Stocks
         "RELIANCE", "TCS", "HDFCBANK", "INFY", "ICICIBANK",
         "HINDUNILVR", "SBIN", "BHARTIARTL", "KOTAKBANK", "ITC",
         "LT", "AXISBANK", "BAJFINANCE", "ASIANPAINT", "MARUTI",
         "HCLTECH", "WIPRO", "ULTRACEMCO", "TITAN", "NESTLEIND",
         "SUNPHARMA", "BAJAJFINSV", "ONGC", "NTPC", "POWERGRID",
-        "M&M", "TATASTEEL", "ADANIENT", "TECHM", "JSWSTEEL"
+        "M&M", "TATASTEEL", "ADANIENT", "TECHM", "JSWSTEEL",
+        "TATAMOTORS", "INDUSINDBK", "COALINDIA", "HINDALCO", "GRASIM",
+        "ADANIPORTS", "DRREDDY", "APOLLOHOSP", "CIPLA", "EICHERMOT",
+        "BPCL", "DIVISLAB", "BRITANNIA", "HEROMOTOCO", "SBILIFE",
+        "HDFCLIFE", "TATACONSUM", "BAJAJ-AUTO", "SHRIRAMFIN", "LTIM",
+        
+        # NIFTY Next 50 Stocks
+        "ADANIGREEN", "AMBUJACEM", "BANKBARODA", "BEL", "BERGEPAINT",
+        "BOSCHLTD", "CANBK", "CHOLAFIN", "COLPAL", "DLF",
+        "DMART", "GAIL", "GODREJCP", "HAVELLS", "ICICIGI",
+        "ICICIPRULI", "IDEA", "INDHOTEL", "INDIGO", "IOC",
+        "IRCTC", "JINDALSTEL", "JUBLFOOD", "LTF", "LUPIN",
+        "MARICO", "MCDOWELL-N", "MOTHERSON", "MUTHOOTFIN", "NAUKRI",
+        "NHPC", "OFSS", "PAGEIND", "PAYTM", "PFC",
+        "PIDILITIND", "PNB", "POLYCAB", "RECLTD", "SAIL",
+        "SBICARD", "SRF", "TATAELXSI", "TATAPOWER", "TORNTPHARM",
+        "TRENT", "UPL", "VEDL", "VBL", "ZOMATO",
+        
+        # Popular Mid-cap & Small-cap Stocks
+        "AUROPHARMA", "BANDHANBNK", "CANFINHOME", "CROMPTON", "CUMMINSIND",
+        "DEEPAKNTR", "ESCORTS", "EXIDEIND", "FEDERALBNK", "GLENMARK",
+        "GMRINFRA", "HINDPETRO", "IBULHSGFIN", "IDFCFIRSTB", "IEX",
+        "IRFC", "KALYANKJIL", "LALPATHLAB", "LICHSGFIN", "MANAPPURAM",
+        "MRF", "NAM-INDIA", "NATIONALUM", "NMDC", "OBEROIRLTY",
+        "PERSISTENT", "PETRONET", "PIIND", "PVRINOX", "RAMCOCEM",
+        "RBLBANK", "SUNTV", "TATACOMM", "TATACHEM", "THERMAX",
+        "TORNTPOWER", "TVSMOTOR", "UNIONBANK", "UBL", "VOLTAS",
+        "WHIRLPOOL", "ZEEL", "ZYDUSLIFE"
     ]
+    
+    # Scheduler configuration
+    DEFAULT_SCHEDULER_INTERVAL = 15  # minutes
+    AUTO_START_SCHEDULER = True  # Auto-start on initialization
     
     def __init__(self, db=None, grow_extractor=None):
         """
