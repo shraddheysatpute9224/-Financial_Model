@@ -476,6 +476,85 @@ class DataPipelineService:
             "data_by_symbol": symbols_data,
             "last_extraction_time": self.metrics.last_run_time.isoformat() if self.metrics.last_run_time else None
         }
+    
+    def add_symbols(self, symbols: List[str]) -> Dict:
+        """Add new symbols to the tracking list"""
+        added = []
+        already_exists = []
+        
+        for symbol in symbols:
+            symbol = symbol.upper().strip()
+            if symbol and symbol not in self.DEFAULT_SYMBOLS:
+                self.DEFAULT_SYMBOLS.append(symbol)
+                added.append(symbol)
+            else:
+                already_exists.append(symbol)
+        
+        self.metrics.expected_daily_symbols = len(self.DEFAULT_SYMBOLS)
+        
+        return {
+            "added": added,
+            "already_exists": already_exists,
+            "total_symbols": len(self.DEFAULT_SYMBOLS)
+        }
+    
+    def remove_symbols(self, symbols: List[str]) -> Dict:
+        """Remove symbols from the tracking list"""
+        removed = []
+        not_found = []
+        
+        for symbol in symbols:
+            symbol = symbol.upper().strip()
+            if symbol in self.DEFAULT_SYMBOLS:
+                self.DEFAULT_SYMBOLS.remove(symbol)
+                removed.append(symbol)
+            else:
+                not_found.append(symbol)
+        
+        self.metrics.expected_daily_symbols = len(self.DEFAULT_SYMBOLS)
+        
+        return {
+            "removed": removed,
+            "not_found": not_found,
+            "total_symbols": len(self.DEFAULT_SYMBOLS)
+        }
+    
+    def get_symbol_categories(self) -> Dict:
+        """Get symbols organized by category"""
+        # First 50 are NIFTY 50, next 50 are NIFTY Next 50, rest are mid/small caps
+        nifty50 = self.DEFAULT_SYMBOLS[:50] if len(self.DEFAULT_SYMBOLS) >= 50 else self.DEFAULT_SYMBOLS
+        nifty_next50 = self.DEFAULT_SYMBOLS[50:100] if len(self.DEFAULT_SYMBOLS) >= 100 else self.DEFAULT_SYMBOLS[50:]
+        others = self.DEFAULT_SYMBOLS[100:] if len(self.DEFAULT_SYMBOLS) > 100 else []
+        
+        return {
+            "nifty_50": {
+                "symbols": nifty50,
+                "count": len(nifty50)
+            },
+            "nifty_next_50": {
+                "symbols": nifty_next50,
+                "count": len(nifty_next50)
+            },
+            "mid_small_caps": {
+                "symbols": others,
+                "count": len(others)
+            },
+            "total_symbols": len(self.DEFAULT_SYMBOLS)
+        }
+    
+    def update_scheduler_config(self, interval_minutes: int = None, auto_start: bool = None) -> Dict:
+        """Update scheduler configuration"""
+        if interval_minutes is not None:
+            self.DEFAULT_SCHEDULER_INTERVAL = interval_minutes
+        
+        if auto_start is not None:
+            self.AUTO_START_SCHEDULER = auto_start
+        
+        return {
+            "interval_minutes": self.DEFAULT_SCHEDULER_INTERVAL,
+            "auto_start": self.AUTO_START_SCHEDULER,
+            "is_running": self._is_running
+        }
 
 
 # Global service instance
