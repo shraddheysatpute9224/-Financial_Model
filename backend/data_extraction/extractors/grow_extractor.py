@@ -181,18 +181,22 @@ class GrowwAPIExtractor:
     async def _test_api_connection(self) -> Dict:
         """Test API connection and validate credentials"""
         try:
-            # Try to get a simple quote to validate the API key
+            # Try to get a simple LTP to validate the API key
             start_time = time.time()
             async with self.session.get(
-                f"{self.BASE_URL}/data/quote",
-                params={"exchange": "NSE", "segment": "CASH", "trading_symbol": "RELIANCE"}
+                f"{self.BASE_URL}/live-data/ltp",
+                params={"segment": "CASH", "exchange_symbols": "NSE_RELIANCE"}
             ) as response:
                 latency = (time.time() - start_time) * 1000
                 
                 if response.status == 200:
-                    return {"success": True, "latency_ms": latency, "message": "API connection successful"}
+                    data = await response.json()
+                    if data.get("status") == "SUCCESS":
+                        return {"success": True, "latency_ms": latency, "message": "API connection successful", "data": data}
+                    else:
+                        return {"success": False, "message": f"API returned: {data.get('error', {}).get('message', 'Unknown error')}"}
                 elif response.status == 401:
-                    return {"success": False, "message": "Authentication failed - invalid API key"}
+                    return {"success": False, "message": "Authentication failed - invalid or expired API token"}
                 elif response.status == 403:
                     return {"success": False, "message": "Access forbidden - check API permissions"}
                 else:
