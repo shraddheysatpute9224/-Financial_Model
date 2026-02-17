@@ -638,19 +638,72 @@ export default function DataPipeline() {
             <CardHeader className="pb-2">
               <CardTitle className="text-white text-lg">Tracked Symbols</CardTitle>
               <CardDescription>
-                {defaultSymbols.length} symbols configured for extraction
+                {symbolCategories?.total_symbols || 0} symbols configured for extraction across 3 categories
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6 gap-2">
-                {defaultSymbols.map((symbol) => (
-                  <div
-                    key={symbol}
-                    className="p-2 bg-[#09090B] rounded text-center border border-[#27272A] hover:border-[#3B82F6]/50 transition-colors"
-                  >
-                    <span className="font-mono text-sm text-white">{symbol}</span>
+              <div className="space-y-6">
+                {/* NIFTY 50 */}
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <Badge className="bg-blue-600">NIFTY 50</Badge>
+                    <span className="text-sm text-[#A1A1AA]">
+                      {symbolCategories?.nifty_50?.count || 0} stocks
+                    </span>
                   </div>
-                ))}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2">
+                    {symbolCategories?.nifty_50?.symbols?.map((symbol) => (
+                      <div
+                        key={symbol}
+                        className="p-2 bg-blue-500/10 rounded text-center border border-blue-500/30 hover:border-blue-500 transition-colors"
+                      >
+                        <span className="font-mono text-xs text-white">{symbol}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* NIFTY Next 50 */}
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <Badge className="bg-purple-600">NIFTY Next 50</Badge>
+                    <span className="text-sm text-[#A1A1AA]">
+                      {symbolCategories?.nifty_next_50?.count || 0} stocks
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2">
+                    {symbolCategories?.nifty_next_50?.symbols?.map((symbol) => (
+                      <div
+                        key={symbol}
+                        className="p-2 bg-purple-500/10 rounded text-center border border-purple-500/30 hover:border-purple-500 transition-colors"
+                      >
+                        <span className="font-mono text-xs text-white">{symbol}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Mid & Small Caps */}
+                {symbolCategories?.mid_small_caps?.count > 0 && (
+                  <div>
+                    <div className="flex items-center gap-2 mb-3">
+                      <Badge className="bg-green-600">Mid & Small Caps</Badge>
+                      <span className="text-sm text-[#A1A1AA]">
+                        {symbolCategories?.mid_small_caps?.count || 0} stocks
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2">
+                      {symbolCategories?.mid_small_caps?.symbols?.map((symbol) => (
+                        <div
+                          key={symbol}
+                          className="p-2 bg-green-500/10 rounded text-center border border-green-500/30 hover:border-green-500 transition-colors"
+                        >
+                          <span className="font-mono text-xs text-white">{symbol}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
