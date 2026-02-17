@@ -233,10 +233,12 @@ metadata:
   run_ui: false
 
 test_plan:
-  current_focus: []
+  current_focus:
+    - "Groww API Data Pipeline Integration"
+    - "Data Pipeline Monitoring Dashboard"
   stuck_tasks: []
   test_all: false
-  test_priority: "medium_first"
+  test_priority: "high_first"
 
 agent_communication:
     - agent: "main"
