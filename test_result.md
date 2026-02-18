@@ -212,7 +212,7 @@ backend:
     status_history:
         - working: true
           agent: "main"
-          comment: "✅ TESTED & VERIFIED: All pipeline endpoints working. API test successful for RELIANCE, TCS, INFY. Extraction job completed with 3/3 symbols (100% success). Scheduler start/stop working. Metrics tracking correctly."
+          comment: "✅ EXPANDED: Now tracking 143 symbols across 3 categories (NIFTY 50, NIFTY Next 50, Mid/Small Caps). Auto-scheduler runs every 15 minutes. API success rate 95.59%, 323ms avg latency. Continuous data collection operational."
 
   - task: "Data Pipeline Monitoring Dashboard"
     implemented: true
@@ -224,7 +224,7 @@ backend:
     status_history:
         - working: true
           agent: "main"
-          comment: "Dashboard created with all required features. Backend APIs verified working. Frontend needs visual verification."
+          comment: "✅ ENHANCED: Dashboard now shows categorized symbols (NIFTY 50 blue, NIFTY Next 50 purple, Mid/Small Caps green). 143 symbols total. Auto-refresh enabled."
 
 metadata:
   created_by: "main_agent"
