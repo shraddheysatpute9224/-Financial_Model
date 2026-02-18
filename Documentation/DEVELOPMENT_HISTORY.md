@@ -60,7 +60,8 @@ StockPulse is a comprehensive personal stock analysis platform designed for Indi
 ├─────────────────────────────────────────────────────────────┤
 │                    INTEGRATIONS                              │
 │  OpenAI GPT-4o (via Emergent LLM Key)                       │
-│  Yahoo Finance (yfinance) for real data                      │
+│  Groww Trading API (Live Indian Market Data)                │
+│  Yahoo Finance (yfinance) for historical data               │
 └─────────────────────────────────────────────────────────────┘
 ```
 
