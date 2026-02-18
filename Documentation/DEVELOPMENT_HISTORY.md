@@ -72,15 +72,20 @@ StockPulse is a comprehensive personal stock analysis platform designed for Indi
 ├── backend/                    # FastAPI Backend
 │   ├── server.py              # Main API server with all endpoints
 │   ├── models/                # Pydantic models
-│   │   └── stock_models.py    # Data models for stocks, portfolios, etc.
+│   │   ├── stock_models.py    # Data models for stocks, portfolios, etc.
+│   │   └── pipeline_models.py # Data pipeline models (NEW)
 │   ├── services/              # Business logic
 │   │   ├── scoring_engine.py  # 4-tier scoring system
 │   │   ├── mock_data.py       # Mock data generation
 │   │   ├── llm_service.py     # GPT-4o integration
-│   │   └── alerts_service.py  # Price alerts functionality
+│   │   ├── alerts_service.py  # Price alerts functionality
+│   │   └── pipeline_service.py # Data pipeline management (NEW)
 │   └── data_extraction/       # Data extraction pipeline
 │       ├── config/            # Field definitions (160 fields)
 │       ├── extractors/        # Data source extractors
+│       │   ├── yfinance_extractor.py  # Yahoo Finance
+│       │   ├── nse_extractor.py       # NSE bhavcopy
+│       │   └── grow_extractor.py      # Groww API (NEW)
 │       ├── pipeline/          # Orchestration logic
 │       ├── processors/        # Data cleaning & normalization
 │       └── quality/           # Data quality validation
@@ -93,7 +98,8 @@ StockPulse is a comprehensive personal stock analysis platform designed for Indi
 │       │   ├── Watchlist.jsx  # Watchlist management
 │       │   ├── Portfolio.jsx  # Portfolio tracking
 │       │   ├── NewsHub.jsx    # News aggregation
-│       │   └── Reports.jsx    # Report generation
+│       │   ├── Reports.jsx    # Report generation
+│       │   └── DataPipeline.jsx # Pipeline monitoring (NEW)
 │       ├── components/        # Reusable UI components
 │       └── lib/               # Utilities and API client
 ├── Documentation/             # Project documentation
